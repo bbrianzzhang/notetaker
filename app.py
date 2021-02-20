@@ -1,4 +1,5 @@
 from tkinter import *
+from summarize import get_notes
 
 root = Tk()
 root.title("note taker")
@@ -8,7 +9,7 @@ def myClick():
 
 intro = Label(root, text="Welcome to Note Taker", width=40)
 intro.grid(row=0, column=0, columnspan=2)
-startButton = Button(root, text="start recording", width=40, height="2", command="")
+startButton = Button(root, text="start recording", width=40, height="2", command=lambda:get_notes(body))
 endButton = Button(root, text="end recording", width=40, height="2", command="")
 
 transcribeFile = Entry(root, width=20)
