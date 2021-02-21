@@ -11,6 +11,8 @@ root.title("note taker")
 
 recording = BooleanVar(root, False)
 def start_recording():
+    startButton["state"] = DISABLED
+    endButton["state"] = NORMAL
     recording.set(True)
     f = open("transcription.txt", "w")
     f.write("")
@@ -20,6 +22,10 @@ def start_recording():
     root.after(10000, get_transcription)
 
 def stop_recording():
+    startButton["state"] = NORMAL
+    endButton["state"] = DISABLED
+    transcriptionButton["state"] = NORMAL
+    notesButton["state"] = NORMAL
     root.after(10000, perma_stop)
 
 def perma_stop():
@@ -55,20 +61,22 @@ def make_notes():
 intro = Label(root, text="Welcome to Note Taker", width=40)
 intro.grid(row=0, column=0, columnspan=2)
 startButton = Button(root, text="start recording", width=40, height="2", command=start_recording)
-endButton = Button(root, text="end recording", width=40, height="2", command=stop_recording)
+endButton = Button(root, text="end recording", width=40, height="2", command=stop_recording, state="DISABLED")
 
 transcribeFile = Entry(root, width=20)
 
 transcriptionButton = Button(root,
     text="download transcription",
-    width=20,)
+    width=20,
+    state="DISABLED")
 
 notesFile = Entry(root, width=20)
 
 notesButton = Button(root,
     text="download automatic notes",
     width=20,
-    command=make_notes)
+    command=make_notes,
+    state="DISABLED")
 
 startButton.grid(row=1, columnspan=2)
 endButton.grid(row=2, columnspan=2)
