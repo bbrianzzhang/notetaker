@@ -1,57 +1,51 @@
-import pyaudio
-import wave
+import sounddevice as sd
+from scipy.io.wavfile import write
+import numpy  # Make sure NumPy is loaded before it is used in the callback
+assert numpy  # avoid "imported but unused" message (W0611)
 
-chunk = 1024  # Record in chunks of 1024 samples
-sample_format = pyaudio.paInt16  # 16 bits per sample
-channels = 2
-fs = 44100  # Record at 44100 samples per second
-seconds = 3
-filename = "output.wav"
+sd.default.device = ["Stereo Mix", 1]
 
-p = pyaudio.PyAudio()  # Create an interface to PortAudio
+fs=44100
+seconds=10
 
-#Select Device
-print ( "Available devices:\n")
-for i in range(0, p.get_device_count()):
-    info = p.get_device_info_by_index(i)
-    print ( str(info["index"]) +  ": \t %s \n \t %s \n" % (info["name"], p.get_host_api_info_by_index(info["hostApi"])["name"]))
-    pass
+myrecording=sd.rec(int(seconds*fs), samplerate=fs, channels=2)
+sd.wait()
+write('output.wav', fs, myrecording)
 
-#ToDo change to your device ID
-device_id = 3
-device_info = p.get_device_info_by_index(device_id)
-channels = device_info["maxInputChannels"] if (device_info["maxOutputChannels"] < device_info["maxInputChannels"]) else device_info["maxOutputChannels"]
-# https://people.csail.mit.edu/hubert/pyaudio/docs/#pyaudio.Stream.__init__
-stream = p.open(format=sample_format,
-                channels=channels,
-                rate=int(device_info["defaultSampleRate"]),
-                input=True,
-                frames_per_buffer=chunk,
-                input_device_index=device_info["index"],
-                as_loopback=True
-                )
 
-frames = []  # Initialize array to store frames
-
-print('\nRecording', device_id, '...\n')
-
-# Store data in chunks for 3 seconds
-for i in range(0, int(fs / chunk * seconds)):
-    data = stream.read(chunk)
-    frames.append(data)
-
-# Stop and close the stream
-stream.stop_stream()
-stream.close()
-# Terminate the PortAudio interface
-p.terminate()
-
-print('Finished recording')
-
-# Save the recorded data as a WAV file
-wf = wave.open(filename, 'wb')
-wf.setnchannels(channels)
-wf.setsampwidth(p.get_sample_size(sample_format))
-wf.setframerate(fs)
-wf.writeframes(b''.join(frames))
-wf.close()
+# import pyaudio, wave, sys
+#
+# def generate_recording():
+#     CHUNK = 8192
+#     FORMAT = pyaudio.paInt16
+#     CHANNELS = 1
+#     RATE = 44100
+#     RECORD_SECONDS = 59
+#
+#     WAVE_OUTPUT_FILENAME = 'output.wav'
+#     p = pyaudio.PyAudio()
+#     stream = p.open(format=FORMAT,
+#                     channels = CHANNELS,
+#                     rate = RATE,
+#                     input = True,
+#                     input_device_index = 0,
+#                     frames_per_buffer = CHUNK)
+#
+#     print("* recording")
+#
+#     frames = []
+#     for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+#         data = stream.read(CHUNK)
+#         frames.append(data)
+#     print("* done recording")
+#
+#     stream.stop_stream()
+#     stream.close()
+#     p.terminate()
+#
+#     wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+#     wf.setnchannels(CHANNELS)
+#     wf.setsampwidth(p.get_sample_size(FORMAT))
+#     wf.setframerate(RATE)
+#     wf.writeframes(b''.join(frames))
+#     wf.close()
