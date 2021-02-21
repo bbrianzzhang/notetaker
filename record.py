@@ -1,36 +1,60 @@
-import pyaudio, wave, sys
+import sounddevice as sd
+from scipy.io.wavfile import write
+import numpy  # Make sure NumPy is loaded before it is used in the callback
+assert numpy  # avoid "imported but unused" message (W0611)
+sd.default.device = ["Stereo Mix", 1]
+import sys
+import time
+import requests
+
+fs=44100
+seconds=59
+
+
+def read_file(filename, chunk_size=5242880):
+    with open(filename, 'rb') as _file:
+        while True:
+            data = _file.read(chunk_size)
+            if not data:
+                break
+            yield data
+
 
 def generate_recording():
-    CHUNK = 8192
-    FORMAT = pyaudio.paInt16
-    CHANNELS = "mono"
-    RATE = 44100
-    RECORD_SECONDS = 10
+    myrecording=sd.rec(int(seconds*fs), samplerate=fs, channels=2)
+    sd.wait()
+    write('output.wav', fs, myrecording)
+    filename = "output.wav"
 
-    WAVE_OUTPUT_FILENAME = 'output.wav'
-    p = pyaudio.PyAudio()
-    stream = p.open(format=FORMAT,
-                    channels = CHANNELS,
-                    rate = RATE,
-                    input = True,
-                    input_device_index = 0,
-                    frames_per_buffer = CHUNK)
+    endpoint = "https://api.assemblyai.com/v2/transcript"
+    headers = {'authorization': "5ca9d5f40ec842038e248e0d5587ab50"}
+    response = requests.post('https://api.assemblyai.com/v2/upload',
+                             headers=headers,
+                             data=read_file(filename))
+    print("Recording sent!")
+    url=response.json()['upload_url']
 
-    print("* recording")
+    json = {
+      "audio_url": url
+    }
+    headers = {
+        "authorization": "5ca9d5f40ec842038e248e0d5587ab50",
+        "content-type": "application/json"
+    }
+    response = requests.post(endpoint, json=json, headers=headers)
+    id=response.json()['id']
 
-    frames = []
-    for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-        data = stream.read(CHUNK)
-        frames.append(data)
-    print("* done recording")
-
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-
-    wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(p.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
-    wf.writeframes(b''.join(frames))
-    wf.close()
+    #receiving the transcription
+    endpoint = "https://api.assemblyai.com/v2/transcript/" + id
+    headers = {
+        "authorization": "5ca9d5f40ec842038e248e0d5587ab50",
+    }
+    finished = False
+    while not finished:
+        response = requests.get(endpoint, headers=headers)
+        if response.json()['status'] == 'completed':
+            finished = True
+            print(response.json()['text'])
+            notes = open('transcription.txt', 'a')
+            notes.write(response.json()['text'])
+            notes.close()

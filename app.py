@@ -31,8 +31,8 @@ def get_transcription():
         #     future = executor.submit(transcribe_file, 'output.wav')
         #     return_val = future.result()
         #     print(return_val)
-        thread2 = threading.Thread(target=transcribe_file)
-        thread2.start()
+        # thread2 = threading.Thread(target=transcribe_file)
+        # thread2.start()
         thread = threading.Thread(target=generate_recording)
         thread.start()
         # with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -41,6 +41,16 @@ def get_transcription():
         #     return_val=future.result()
         #     print(return_val)
         root.after(10000, get_transcription)
+
+def make_notes():
+    raw = open('transcription.txt', 'r')
+    rawString = raw.read()
+    notesName = notesFile.get()+".txt"
+    notes = get_notes(rawString)
+    file = open(notesName, "w")
+    file.write(notes)
+    file.close()
+    print("Notes written!")
 
 intro = Label(root, text="Welcome to Note Taker", width=40)
 intro.grid(row=0, column=0, columnspan=2)
@@ -51,15 +61,14 @@ transcribeFile = Entry(root, width=20)
 
 transcriptionButton = Button(root,
     text="download transcription",
-    width=20,
-    state="disabled")
+    width=20,)
 
 notesFile = Entry(root, width=20)
 
 notesButton = Button(root,
     text="download automatic notes",
     width=20,
-    state="disabled")
+    command=make_notes)
 
 startButton.grid(row=1, columnspan=2)
 endButton.grid(row=2, columnspan=2)
