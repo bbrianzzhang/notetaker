@@ -7,7 +7,7 @@ import concurrent.futures
 import threading
 
 root = Tk()
-root.title("note taker")
+root.title("LazyNote")
 
 recording = BooleanVar(root, False)
 def start_recording():
@@ -58,7 +58,7 @@ def make_notes():
     file.close()
     print("Notes written!")
 
-intro = Label(root, text="Welcome to Note Taker", width=40)
+intro = Label(root, text="Welcome to LazyNote", width=40)
 intro.grid(row=0, column=0, columnspan=2)
 startButton = Button(root, text="start recording", width=40, height="2", command=start_recording)
 endButton = Button(root, text="end recording", width=40, height="2", command=stop_recording, state="DISABLED")
