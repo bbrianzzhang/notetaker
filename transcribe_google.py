@@ -1,5 +1,5 @@
 import io
-
+import wave
 def transcribe_file():
     """Transcribe the given audio file asynchronously."""
     from google.cloud import speech
@@ -19,23 +19,25 @@ def transcribe_file():
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         language_code="en-US",
         audio_channel_count=1,
-        sample_rate_hertz=44100,
-        enable_automatic_punctuation=True
+        # enable_separate_recognition_per_channel=True,
     )
 
+    # response = client.recognize(config=config, audio=audio)
 
     operation = client.long_running_recognize(config=config, audio=audio)
 
-    #print("Waiting for operation to complete...")
+    print("Waiting for operation to complete...")
     response = operation.result(timeout=90)
 
-    transcription = ""
+    # for i, result in enumerate(response.results):
+    #     alternative = result.alternatives[0]
+    #     print("-" * 20)
+    #     print("First alternative of result {}".format(i))
+    #     print(u"Transcript: {}".format(alternative.transcript))
+    #     print(u"Channel Tag: {}".format(result.channel_tag))
     # Each result is for a consecutive portion of the audio. Iterate through
     # them to get the transcripts for the entire audio file.
     for result in response.results:
         # The first alternative is the most likely one for this portion.
-        transcription+=result.alternatives[0].transcript
-    f = open("transcription.txt", "a")
-    f.write(transcription)
-    f.close()
-    print(transcription)
+        print(u"Transcript: {}".format(result.alternatives[0].transcript))
+        print("Confidence: {}".format(result.alternatives[0].confidence))

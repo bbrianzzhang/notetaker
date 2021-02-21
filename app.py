@@ -17,10 +17,10 @@ def start_recording():
     f.close()
     thread = threading.Thread(target=generate_recording)
     thread.start()
-    root.after(59000, get_transcription)
+    root.after(10000, get_transcription)
 
 def stop_recording():
-    root.after(59000, perma_stop)
+    root.after(10000, perma_stop)
 
 def perma_stop():
     recording.set(False)
@@ -40,7 +40,7 @@ def get_transcription():
         #     future = executor.submit(transcribe_file, 'output.wav')
         #     return_val=future.result()
         #     print(return_val)
-        root.after(59000, get_transcription)
+        root.after(10000, get_transcription)
 
 intro = Label(root, text="Welcome to Note Taker", width=40)
 intro.grid(row=0, column=0, columnspan=2)
