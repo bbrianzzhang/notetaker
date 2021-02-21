@@ -1,41 +1,45 @@
 import io
+#
+from google.cloud import speech_v1p1beta1 as speech
+import enum
+import types
+import wave
+
+# from google.cloud import speech
 
 def transcribe_file():
-    """Transcribe the given audio file asynchronously."""
-    from google.cloud import speech
-
     client = speech.SpeechClient()
+    w = wave.open('output.wav', 'w')
+    w.setnchannels(1)
+    w.close()
+    speech_file = "output.wav"
 
-    with io.open("output.wav", "rb") as audio_file:
+    with open(speech_file, "rb") as audio_file:
         content = audio_file.read()
 
-    """
-     Note that transcription is limited to a 60 seconds audio file.
-     Use a GCS file for audio longer than 1 minute.
-    """
     audio = speech.RecognitionAudio(content=content)
 
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         language_code="en-US",
-        audio_channel_count=1,
-        sample_rate_hertz=44100,
-        enable_automatic_punctuation=True
+        enable_speaker_diarization=True,
+        diarization_speaker_count=2,
+        audio_channel_count=2,
     )
 
+    print("Waiting for operation to complete...")
+    response = client.recognize(config=config, audio=audio)
 
-    operation = client.long_running_recognize(config=config, audio=audio)
+    # The transcript within each result is separate and sequential per result.
+    # However, the words list within an alternative includes all the words
+    # from all the results thus far. Thus, to get all the words with speaker
+    # tags, you only have to take the words list from the last result:
+    result = response.results[-1]
 
-    #print("Waiting for operation to complete...")
-    response = operation.result(timeout=90)
+    words_info = result.alternatives[0].words
 
-    transcription = ""
-    # Each result is for a consecutive portion of the audio. Iterate through
-    # them to get the transcripts for the entire audio file.
-    for result in response.results:
-        # The first alternative is the most likely one for this portion.
-        transcription+=result.alternatives[0].transcript
-    f = open("transcription.txt", "a")
-    f.write(transcription)
-    f.close()
-    print(transcription)
+    # Printing out the output:
+    for word_info in words_info:
+        print(
+            u"word: '{}', speaker_tag: {}".format(word_info.word, word_info.speaker_tag)
+        )
